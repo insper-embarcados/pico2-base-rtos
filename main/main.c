@@ -3,6 +3,10 @@
 #include "semphr.h"
 #include <stdio.h>
 
+#include <stdio.h>
+#include "pico/stdlib.h"
+
+
 /* Semaphores */
 SemaphoreHandle_t semaphores[4];
 
@@ -21,12 +25,16 @@ void vTask(void *pvParameters)
 
         // Release next task’s semaphore
         int nextTask = (taskNum + 1) % 4;
+        vTaskDelay(pdTICKS_TO_MS(100)); // Simulate work with a delay
         xSemaphoreGive(semaphores[nextTask]);
     }
 }
 
 int main(void)
 {
+    stdio_init_all();
+
+
     for (int i = 0; i < 4; i++)
     {
         semaphores[i] = xSemaphoreCreateBinary();
