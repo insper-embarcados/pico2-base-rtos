@@ -1,30 +1,27 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "semphr.h"
+
+#include <stdint.h>
 #include <stdio.h>
 
-#include <stdio.h>
 #include "pico/stdlib.h"
 
-/* Semaphores */
-SemaphoreHandle_t semaphores[4];
+#define NUM_TASKS 4
 
-/* Task function */
-void vTask(void *pvParameters)
+static SemaphoreHandle_t semaphores[NUM_TASKS];
+
+static void vTask(void *pvParameters)
 {
-    int taskNum = (int)pvParameters;
+    const int taskNum = (int)(intptr_t)pvParameters;
 
-    for (;;)
-    {
-        // Wait for my semaphore
+    for (;;) {
         xSemaphoreTake(semaphores[taskNum], portMAX_DELAY);
 
-        // Critical section: do my work
         printf("Hello from task %d\n", taskNum + 1);
 
-        // Release next task’s semaphore
-        int nextTask = (taskNum + 1) % 4;
-        vTaskDelay(pdTICKS_TO_MS(100)); // Simulate work with a delay
+        const int nextTask = (taskNum + 1) % NUM_TASKS;
+        vTaskDelay(pdMS_TO_TICKS(100));
         xSemaphoreGive(semaphores[nextTask]);
     }
 }
@@ -33,23 +30,30 @@ int main(void)
 {
     stdio_init_all();
 
-
-    for (int i = 0; i < 4; i++)
-    {
+    for (int i = 0; i < NUM_TASKS; i++) {
         semaphores[i] = xSemaphoreCreateBinary();
+
+        if (semaphores[i] == NULL) {
+            for (;;);
+        }
     }
 
-    for (int i = 0; i < 4; i++)
-    {
-        char name[10];
-        snprintf(name, sizeof(name), "Task%d", i + 1);
-        xTaskCreate(vTask, name, configMINIMAL_STACK_SIZE, (void *)i, 1, NULL);
+    for (int i = 0; i < NUM_TASKS; i++) {
+        if (xTaskCreate(
+                vTask,
+                "Task",
+                configMINIMAL_STACK_SIZE,
+                (void *)(intptr_t)i,
+                1,
+                NULL) != pdPASS) {
+            for (;;);
+        }
     }
 
+    /* Inicia a sequência: Task 1 → Task 2 → Task 3 → Task 4. */
     xSemaphoreGive(semaphores[0]);
 
     vTaskStartScheduler();
 
-    // Should never reach here
     for (;;);
 }
