@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include "pico/stdlib.h"
 
-
 static void vHelloTask(void *pvParameters) {
     (void)pvParameters;
 
