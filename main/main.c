@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include "pico/stdlib.h"
 
-
 /* Semaphores */
 SemaphoreHandle_t semaphores[4];
 
