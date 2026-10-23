@@ -4,7 +4,6 @@
 
 #include <stdint.h>
 #include <stdio.h>
-
 #include "pico/stdlib.h"
 
 #define NUM_TASKS 4
